@@ -30,6 +30,8 @@ describe('terrainFileKind', () => {
     expect(terrainFileKind('DTM.TIF')).toBe('geotiff');
     expect(terrainFileKind('scan.laz')).toBe('las');
     expect(terrainFileKind('survey.xml')).toBe('landxml');
-    expect(terrainFileKind('drawing.dwg')).toBeNull();
+    expect(terrainFileKind('drawing.dwg')).toBe('dwg');
+    expect(terrainFileKind('survey.SOS')).toBe('sosi');
+    expect(terrainFileKind('readme.txt')).toBeNull();
   });
 });
