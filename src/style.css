@@ -334,3 +334,7 @@ label.check {
   gap: 6px;
   margin-top: 8px;
 }
+
+#export-ifc {
+  margin-left: auto;
+}
