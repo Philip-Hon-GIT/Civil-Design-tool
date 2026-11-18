@@ -104,5 +104,5 @@ export function createViewer({ target, area }: ViewerOptions) {
   instance.add(sun);
   instance.add(sun.target);
 
-  return { instance, map, extent, crs, setBaseMap };
+  return { instance, map, extent, crs, controls, setBaseMap };
 }

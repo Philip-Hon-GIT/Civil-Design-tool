@@ -1,6 +1,8 @@
 import { KLAEBUVEIEN } from './core/projects';
 import type { BaseMap } from './io/kartverket';
 import { ACCEPTED_TERRAIN_EXTENSIONS } from './io/terrainFiles';
+import { mountAlignmentPanel } from './ui/alignmentPanel';
+import { AlignmentView } from './viewer/alignmentView';
 import { createViewer } from './viewer/createViewer';
 import { addTerrainFile, type AddedTerrain } from './viewer/terrainImport';
 import './style.css';
@@ -9,7 +11,11 @@ const target = document.querySelector<HTMLDivElement>('#viewer');
 if (!target) throw new Error('Missing #viewer element');
 
 const area = KLAEBUVEIEN;
-const { instance, map, crs, setBaseMap } = createViewer({ target, area });
+const { instance, map, crs, controls, setBaseMap } = createViewer({ target, area });
+
+const alignmentView = new AlignmentView(instance, map, controls, area.center);
+const alignmentRoot = document.querySelector<HTMLElement>('#alignment-panel');
+if (alignmentRoot) mountAlignmentPanel(alignmentRoot, alignmentView, area);
 
 const title = document.querySelector('#area-name');
 if (title) title.textContent = `${area.name} · ${area.crs}`;
