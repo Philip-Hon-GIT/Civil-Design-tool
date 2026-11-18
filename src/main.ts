@@ -1,5 +1,5 @@
 import { KLAEBUVEIEN } from './core/projects';
-import type { BaseMap } from './io/kartverket';
+import { OVERLAYS, type BaseMap } from './io/kartverket';
 import { ACCEPTED_TERRAIN_EXTENSIONS } from './io/terrainFiles';
 import { exportIfc, type TerrainGrid } from './io/ifc/exportIfc';
 import { buildCorridor, corridorFootprint, sectionAtStation, type Corridor } from './core/corridor';
@@ -21,7 +21,7 @@ const target = document.querySelector<HTMLDivElement>('#viewer');
 if (!target) throw new Error('Missing #viewer element');
 
 const area = KLAEBUVEIEN;
-const { instance, map, crs, controls, setBaseMap, setRoadFootprint } = createViewer({
+const { instance, map, crs, controls, setBaseMap, setOverlay, setRoadFootprint } = createViewer({
   target,
   area,
 });
@@ -125,6 +125,17 @@ if (profileRoot && sectionRoot && templateRoot) {
       rebuildRoad();
     }, 500);
   });
+}
+
+const overlayRoot = document.querySelector('#overlays');
+for (const overlay of OVERLAYS) {
+  const label = document.createElement('label');
+  label.className = 'overlay';
+  const box = document.createElement('input');
+  box.type = 'checkbox';
+  box.addEventListener('change', () => void setOverlay(overlay, box.checked));
+  label.append(box, ` ${overlay.name}`);
+  overlayRoot?.append(label);
 }
 
 const title = document.querySelector('#area-name');

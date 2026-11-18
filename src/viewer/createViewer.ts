@@ -12,6 +12,7 @@ import { Fill, Style } from 'ol/style.js';
 import { MapLightingMode } from '@giro3d/giro3d/entities/MapLightingOptions.js';
 import GeoTIFFFormat from '@giro3d/giro3d/formats/GeoTIFFFormat.js';
 import UrlImageSource from '@giro3d/giro3d/sources/UrlImageSource.js';
+import WmsSource from '@giro3d/giro3d/sources/WmsSource.js';
 import WmtsSource from '@giro3d/giro3d/sources/WmtsSource.js';
 import {
   BufferGeometry,
@@ -24,7 +25,12 @@ import {
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { CRS_DEFS, utmMatrixSet } from '../core/crs';
 import { areaBounds, type ProjectArea } from '../core/projects';
-import { type BaseMap, dtmWcsTemplate, KARTVERKET_WMTS_CAPABILITIES } from '../io/kartverket';
+import {
+  type BaseMap,
+  dtmWcsTemplate,
+  KARTVERKET_WMTS_CAPABILITIES,
+  type Overlay,
+} from '../io/kartverket';
 
 export interface ViewerOptions {
   target: HTMLDivElement;
@@ -74,8 +80,30 @@ export function createViewer({ target, area }: ViewerOptions) {
     const layer = new ColorLayer({ name, extent, source });
     baseMaps[name] = layer;
     await map.addLayer(layer);
+    // Keep base maps below any overlays.
+    map.insertLayerAfter(layer, null);
   }
   void setBaseMap('topograatone');
+
+  // WMS overlays (FKB, property boundaries), created on first use and kept above the base map.
+  const overlays: Record<string, ColorLayer> = {};
+  async function setOverlay(overlay: Overlay, visible: boolean) {
+    let layer = overlays[overlay.id];
+    if (!layer) {
+      if (!visible) return;
+      const source = new WmsSource({
+        url: overlay.url,
+        projection: area.crs,
+        layer: overlay.layers,
+        imageFormat: 'image/png',
+      });
+      layer = new ColorLayer({ name: overlay.id, extent, source });
+      overlays[overlay.id] = layer;
+      await map.addLayer(layer);
+    }
+    layer.visible = visible;
+    instance.notifyChange(map);
+  }
 
   // Reference line (existing road), draped on the terrain once heights are available.
   const refPoints = area.reference?.points ?? [];
@@ -123,5 +151,5 @@ export function createViewer({ target, area }: ViewerOptions) {
   instance.add(sun);
   instance.add(sun.target);
 
-  return { instance, map, extent, crs, controls, setBaseMap, setRoadFootprint };
+  return { instance, map, extent, crs, controls, setBaseMap, setOverlay, setRoadFootprint };
 }

@@ -119,6 +119,7 @@ main {
 table.pi td:nth-child(n + 4) {
   width: 46px;
 }
+#overlay-section,
 #alignment-panel {
   margin-top: 18px;
   border-top: 1px solid #2a3342;
@@ -337,4 +338,9 @@ label.check {
 
 #export-ifc {
   margin-left: auto;
+}
+
+label.overlay {
+  display: block;
+  margin: 4px 0;
 }
