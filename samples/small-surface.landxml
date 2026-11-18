@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic test surface (not real survey data): 3 x 3 grid near Klæbuveien, EUREF89 UTM32. -->
+<LandXML xmlns="http://www.landxml.org/schema/LandXML-1.2" version="1.2">
+  <Units><Metric linearUnit="meter" areaUnit="squareMeter" volumeUnit="cubicMeter"/></Units>
+  <Surfaces>
+    <Surface name="Test survey">
+      <Definition surfType="TIN">
+        <Pnts>
+          <P id="1">7032850 569780 60.0</P>
+          <P id="2">7032850 569830 61.0</P>
+          <P id="3">7032850 569880 62.5</P>
+          <P id="4">7032900 569780 61.0</P>
+          <P id="5">7032900 569830 62.0</P>
+          <P id="6">7032900 569880 63.5</P>
+          <P id="7">7032950 569780 62.0</P>
+          <P id="8">7032950 569830 63.0</P>
+          <P id="9">7032950 569880 64.5</P>
+        </Pnts>
+        <Faces>
+          <F>1 2 5</F><F>1 5 4</F><F>2 3 6</F><F>2 6 5</F>
+          <F>4 5 8</F><F>4 8 7</F><F>5 6 9</F><F>5 9 8</F>
+        </Faces>
+      </Definition>
+    </Surface>
+  </Surfaces>
+</LandXML>

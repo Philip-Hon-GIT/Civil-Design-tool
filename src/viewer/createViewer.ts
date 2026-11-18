@@ -8,7 +8,14 @@ import { MapLightingMode } from '@giro3d/giro3d/entities/MapLightingOptions.js';
 import GeoTIFFFormat from '@giro3d/giro3d/formats/GeoTIFFFormat.js';
 import UrlImageSource from '@giro3d/giro3d/sources/UrlImageSource.js';
 import WmtsSource from '@giro3d/giro3d/sources/WmtsSource.js';
-import { BufferGeometry, Line, LineBasicMaterial, Vector3 } from 'three';
+import {
+  BufferGeometry,
+  DirectionalLight,
+  HemisphereLight,
+  Line,
+  LineBasicMaterial,
+  Vector3,
+} from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { CRS_DEFS, utmMatrixSet } from '../core/crs';
 import { areaBounds, type ProjectArea } from '../core/projects';
@@ -89,5 +96,13 @@ export function createViewer({ target, area }: ViewerOptions) {
   controls.enableDamping = true;
   instance.view.setControls(controls);
 
-  return { instance, map, extent, setBaseMap };
+  // Lights for imported meshes (the map itself uses hillshading).
+  instance.add(new HemisphereLight('#ffffff', '#445566', 1.2));
+  const sun = new DirectionalLight('#ffffff', 1.5);
+  sun.position.set(center.x - 1000, center.y + 1000, 2000);
+  sun.target.position.set(center.x, center.y, 0);
+  instance.add(sun);
+  instance.add(sun.target);
+
+  return { instance, map, extent, crs, setBaseMap };
 }

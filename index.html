@@ -19,7 +19,19 @@
           </select>
         </label>
       </header>
-      <div id="viewer"></div>
+      <main>
+        <aside>
+          <h2>Terrain</h2>
+          <p class="base">Kartverket DTM 1 m (base)</p>
+          <ul id="terrain-list"></ul>
+          <button id="add-terrain">+ Add terrain</button>
+          <input id="terrain-file" type="file" multiple hidden />
+          <p class="hint">GeoTIFF, LAS/LAZ or LandXML. Or drop files on the 3D view.</p>
+          <p class="hint">Files stay on your computer; nothing is uploaded.</p>
+          <div id="status"></div>
+        </aside>
+        <div id="viewer"></div>
+      </main>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
