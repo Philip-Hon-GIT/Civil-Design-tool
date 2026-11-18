@@ -328,3 +328,9 @@ aside h2.sub {
 .checks p.ok {
   color: #8fd18f;
 }
+label.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
