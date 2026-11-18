@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Civil Design Tool</title>
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <strong>Civil Design Tool</strong>
+        <span id="area-name"></span>
+        <label
+          >Base map
+          <select id="basemap">
+            <option value="topograatone" selected>Topo (grey)</option>
+            <option value="topo">Topo (colour)</option>
+            <option value="none">None (terrain only)</option>
+          </select>
+        </label>
+      </header>
+      <main>
+        <aside>
+          <h2>Terrain</h2>
+          <p class="base">Kartverket DTM 1 m (base)</p>
+          <ul id="terrain-list"></ul>
+          <button id="add-terrain">+ Add terrain</button>
+          <input id="terrain-file" type="file" multiple hidden />
+          <p class="hint">GeoTIFF, LAS/LAZ or LandXML. Or drop files on the 3D view.</p>
+          <p class="hint">Files stay on your computer; nothing is uploaded.</p>
+          <div id="status"></div>
+          <section id="alignment-panel"></section>
+          <section id="template-panel"></section>
+        </aside>
+        <div id="workspace">
+          <div id="viewer"></div>
+          <div id="bottom">
+            <div id="profile"></div>
+            <div id="section"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
