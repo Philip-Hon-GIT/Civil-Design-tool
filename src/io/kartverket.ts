@@ -23,3 +23,32 @@ export const KARTVERKET_WMTS_CAPABILITIES =
   'https://cache.kartverket.no/v1/wmts/1.0.0/WMTSCapabilities.xml';
 
 export type BaseMap = 'topo' | 'topograatone';
+
+/** Open Geonorge WMS overlays drawn on top of the base map. */
+export interface Overlay {
+  id: string;
+  name: string;
+  url: string;
+  layers: string[];
+}
+
+export const OVERLAYS: Overlay[] = [
+  {
+    id: 'fkb',
+    name: 'Buildings and roads (FKB)',
+    url: 'https://wms.geonorge.no/skwms1/wms.fkb',
+    layers: ['fkb_samferdsel', 'fkb_bygning'],
+  },
+  {
+    id: 'property',
+    name: 'Property boundaries (matrikkel)',
+    url: 'https://wms.geonorge.no/skwms1/wms.matrikkelkart',
+    layers: ['eiendomsgrense'],
+  },
+  {
+    id: 'contours',
+    name: 'Contours 1 m (FKB)',
+    url: 'https://wms.geonorge.no/skwms1/wms.fkb',
+    layers: ['hoydekurver_1m'],
+  },
+];
