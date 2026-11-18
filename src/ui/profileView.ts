@@ -28,6 +28,7 @@ export class ProfileView {
   private readonly svg: SVGSVGElement;
   private readonly info: HTMLElement;
   private readonly listeners = new Set<(p: Profile | null) => void>();
+  private readonly hoverListeners = new Set<(station: number) => void>();
   private scale = { s0: 0, s1: 1, z0: 0, z1: 1, w: 1, h: 1 };
 
   constructor(
@@ -59,6 +60,11 @@ export class ProfileView {
 
   onChange(fn: (p: Profile | null) => void) {
     this.listeners.add(fn);
+  }
+
+  /** Called with the station under the cursor. */
+  onHover(fn: (station: number) => void) {
+    this.hoverListeners.add(fn);
   }
 
   getProfile() {
@@ -300,6 +306,7 @@ export class ProfileView {
 
   private showReadout(s: number) {
     if (!this.profile || s < this.scale.s0 || s > this.scale.s1) return;
+    this.hoverListeners.forEach((fn) => fn(s));
     const g = nearest(this.ground, s);
     const d = elevationAt(this.profile, s);
     const diff =

@@ -3,7 +3,12 @@ import CoordinateSystem from '@giro3d/giro3d/core/geographic/CoordinateSystem.js
 import Extent from '@giro3d/giro3d/core/geographic/Extent.js';
 import ColorLayer from '@giro3d/giro3d/core/layer/ColorLayer.js';
 import ElevationLayer from '@giro3d/giro3d/core/layer/ElevationLayer.js';
+import MaskLayer, { MaskMode } from '@giro3d/giro3d/core/layer/MaskLayer.js';
 import Map from '@giro3d/giro3d/entities/Map.js';
+import VectorSource from '@giro3d/giro3d/sources/VectorSource.js';
+import Feature from 'ol/Feature.js';
+import Polygon from 'ol/geom/Polygon.js';
+import { Fill, Style } from 'ol/style.js';
 import { MapLightingMode } from '@giro3d/giro3d/entities/MapLightingOptions.js';
 import GeoTIFFFormat from '@giro3d/giro3d/formats/GeoTIFFFormat.js';
 import UrlImageSource from '@giro3d/giro3d/sources/UrlImageSource.js';
@@ -96,6 +101,20 @@ export function createViewer({ target, area }: ViewerOptions) {
   controls.enableDamping = true;
   instance.view.setControls(controls);
 
+  // Terrain mask: hides the terrain inside the road footprint so a road in cut is visible.
+  const maskSource = new VectorSource({
+    data: [],
+    style: new Style({ fill: new Fill({ color: 'white' }) }),
+  });
+  const mask = new MaskLayer({ name: 'Road footprint', source: maskSource });
+  mask.maskMode = MaskMode.Inverted;
+  void map.addLayer(mask);
+  function setRoadFootprint(ring: [number, number][] | null) {
+    maskSource.clear();
+    if (ring && ring.length > 3) maskSource.addFeature(new Feature(new Polygon([ring])));
+    instance.notifyChange(map);
+  }
+
   // Lights for imported meshes (the map itself uses hillshading).
   instance.add(new HemisphereLight('#ffffff', '#445566', 1.2));
   const sun = new DirectionalLight('#ffffff', 1.5);
@@ -104,5 +123,5 @@ export function createViewer({ target, area }: ViewerOptions) {
   instance.add(sun);
   instance.add(sun.target);
 
-  return { instance, map, extent, crs, controls, setBaseMap };
+  return { instance, map, extent, crs, controls, setBaseMap, setRoadFootprint };
 }
