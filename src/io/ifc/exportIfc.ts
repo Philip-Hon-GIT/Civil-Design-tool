@@ -1,5 +1,5 @@
 import { pointAtStation, type Alignment } from '../../core/alignment';
-import type { Corridor } from '../../core/corridor';
+import { sameStructure, type Corridor } from '../../core/corridor';
 import type { SectionPart, SectionTemplate } from '../../core/crossSection';
 import { epsgCode } from '../../core/crs';
 import type { DesignCriteria } from '../../core/designCriteria';
@@ -456,7 +456,7 @@ export function corridorFaces(
   for (let k = 1; k < corridor.sections.length; k++) {
     const a = corridor.sections[k - 1]!;
     const b = corridor.sections[k]!;
-    if (a.parts.join() !== b.parts.join()) continue;
+    if (!sameStructure(a, b)) continue;
     a.parts.forEach((part, i) => {
       if (!parts.includes(part)) return;
       const n = coords.length + 1;

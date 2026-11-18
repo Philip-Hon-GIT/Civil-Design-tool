@@ -82,9 +82,12 @@ describe('street section', () => {
     expect(rightParts).toContain('kerb');
     expect(rightParts).toContain('footway');
     expect(s.parts.filter((p) => p === 'footway').length).toBe(1);
-    // Footway edge: lane -0.09, shoulder -0.01, kerb +0.12, footway +0.05.
+    // N100 street: kerb at the carriageway edge, no shoulder on the footway side.
+    expect(rightParts).not.toContain('shoulder');
+    expect(s.parts.slice(0, s.parts.indexOf('lane'))).toContain('shoulder');
+    // Footway edge: lane -0.09, kerb +0.12, footway +0.05.
     const fwIdx = s.parts.lastIndexOf('footway');
-    expect(s.points[fwIdx + 1]!.z).toBeCloseTo(10 - 0.09 - 0.01 + 0.12 + 0.05, 9);
+    expect(s.points[fwIdx + 1]!.z).toBeCloseTo(10 - 0.09 + 0.12 + 0.05, 9);
   });
 });
 

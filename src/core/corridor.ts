@@ -90,3 +90,13 @@ export function corridorFootprint(corridor: Corridor): [number, number][] {
   if (ring.length > 0) ring.push(ring[0]!);
   return ring;
 }
+
+/**
+ * Whether two neighbouring sections can be joined into a surface: same parts in the same
+ * order, where a cut and a fill slope count as the same (the slope just changes direction).
+ */
+export function sameStructure(a: { parts: string[] }, b: { parts: string[] }): boolean {
+  if (a.parts.length !== b.parts.length) return false;
+  const slope = (p: string) => (p === 'cut' || p === 'fill' ? 'slope' : p);
+  return a.parts.every((p, i) => slope(p) === slope(b.parts[i]!));
+}

@@ -6,9 +6,10 @@ import { formatStation } from './station';
 /**
  * Design criteria for a road class and design speed.
  *
- * NOTE: values are computed from standard formulas with stated assumptions, as indicative
- * defaults for early design. They must be checked against Statens vegvesen N100 and the
- * municipality's road norm (kommunal vegnorm) before use in a real project.
+ * Minimum horizontal radius and sag curve radius for streets (gater, up to 60 km/h) come from
+ * Statens vegvesen N100 (2019), Tabell B.1. Crest curves and sight distance use standard
+ * formulas with stated assumptions. Check against the municipality's road norm
+ * (kommunal vegnorm) before use in a real project.
  */
 export interface DesignCriteria {
   speed: number; // km/h
@@ -18,6 +19,13 @@ export interface DesignCriteria {
   minSagK: number;
   stoppingSightDistance: number; // m
 }
+
+/** N100 Tabell B.1 (gater): minimum horizontal radius and sag (lavbrekk) radius in metres. */
+const N100_STREET: { maxSpeed: number; minRadius: number; minSagRadius: number }[] = [
+  { maxSpeed: 40, minRadius: 40, minSagRadius: 150 },
+  { maxSpeed: 50, minRadius: 60, minSagRadius: 400 },
+  { maxSpeed: 60, minRadius: 125, minSagRadius: 600 },
+];
 
 /** Side friction used for minimum radius, by design speed (urban, simplified). */
 const SIDE_FRICTION: Record<number, number> = {
@@ -50,7 +58,9 @@ export function criteriaFor(
   maxSuperelevation = 0.04,
 ): DesignCriteria {
   const f = SIDE_FRICTION[speed] ?? 0.18;
-  const minRadius = Math.ceil((speed * speed) / (127 * (maxSuperelevation + f)) / 5) * 5;
+  const street = N100_STREET.find((r) => speed <= r.maxSpeed);
+  const minRadius =
+    street?.minRadius ?? Math.ceil((speed * speed) / (127 * (maxSuperelevation + f)) / 5) * 5;
   const ssd = stoppingSightDistance(speed);
   // Crest: sight distance S over the curve, eye 1.1 m, object 0.2 m: R = S² / (2 (√h1 + √h2)²).
   const crestR = (ssd * ssd) / (2 * (Math.sqrt(1.1) + Math.sqrt(0.2)) ** 2);
@@ -61,7 +71,7 @@ export function criteriaFor(
     minRadius,
     maxGrade,
     minCrestK: Math.ceil(crestR / 100),
-    minSagK: Math.ceil(sagR / 100),
+    minSagK: street ? street.minSagRadius / 100 : Math.ceil(sagR / 100),
     stoppingSightDistance: Math.round(ssd),
   };
 }
@@ -77,32 +87,35 @@ export interface RoadPreset {
 /** Indicative municipal road classes (verify against the municipality's road norm). */
 export const ROAD_PRESETS: RoadPreset[] = [
   {
+    // N100 B.6: overordnet boliggate, kjørebane 5.5–6 m.
     id: 'atkomst',
-    name: 'Atkomstveg, 30 km/h',
+    name: 'Atkomstveg (boliggate), 30 km/h',
     speed: 30,
-    maxGrade: 0.1,
-    template: { laneWidth: 2.5, shoulderWidth: 0.25, footwayLeft: 0, footwayRight: 0 },
+    maxGrade: 0.08,
+    template: { laneWidth: 2.75, shoulderWidth: 0.25, footwayLeft: 0, footwayRight: 2.5 },
   },
   {
+    // N100 B.3: kjørefelt 3.0 m at ≤ 40 km/h, fortau 2.5 m.
     id: 'samle',
-    name: 'Samleveg, 40 km/h',
+    name: 'Samleveg (samlegate), 40 km/h',
     speed: 40,
     maxGrade: 0.08,
     template: { laneWidth: 3.0, shoulderWidth: 0.25, footwayLeft: 0, footwayRight: 2.5 },
   },
   {
+    // N100 B.3: kjørefelt 3.25 m at 50–60 km/h, fortau 2.5 m both sides.
     id: 'hoved',
-    name: 'Hovedveg i by, 50 km/h',
+    name: 'Hovedveg i by (hovedgate), 50 km/h',
     speed: 50,
     maxGrade: 0.07,
-    template: { laneWidth: 3.25, shoulderWidth: 0.5, footwayLeft: 2.5, footwayRight: 3.0 },
+    template: { laneWidth: 3.25, shoulderWidth: 0.25, footwayLeft: 2.5, footwayRight: 2.5 },
   },
   {
     id: 'hoved60',
     name: 'Hovedveg, 60 km/h',
     speed: 60,
     maxGrade: 0.06,
-    template: { laneWidth: 3.25, shoulderWidth: 0.75, footwayLeft: 0, footwayRight: 3.0 },
+    template: { laneWidth: 3.25, shoulderWidth: 0.5, footwayLeft: 0, footwayRight: 3.0 },
   },
 ];
 
