@@ -17,6 +17,19 @@ export interface SectionTemplate {
   fillSlope: number;
   /** Max horizontal distance searched for daylight from the shoulder edge. */
   maxSlopeWidth: number;
+  /** Kerb height outside the shoulder (0 = no kerb). Only used where there is a footway. */
+  kerbHeight: number;
+  /** Footway / gang- og sykkelvei width on each side (0 = none). */
+  footwayLeft: number;
+  footwayRight: number;
+  /** Footway crossfall, fraction, falling towards the road. */
+  footwayCrossfall: number;
+}
+
+/** Crossfall per side (fraction, positive = falling away from the centreline). */
+export interface SideCrossfall {
+  left: number;
+  right: number;
 }
 
 /** Municipal street, about 6.5 m paved: 2 x 3.0 m lanes + 0.25 m shoulders. */
@@ -28,9 +41,13 @@ export const DEFAULT_TEMPLATE: SectionTemplate = {
   cutSlope: 2,
   fillSlope: 2,
   maxSlopeWidth: 25,
+  kerbHeight: 0.12,
+  footwayLeft: 0,
+  footwayRight: 0,
+  footwayCrossfall: 0.02,
 };
 
-export type SectionPart = 'lane' | 'shoulder' | 'cut' | 'fill';
+export type SectionPart = 'lane' | 'shoulder' | 'kerb' | 'footway' | 'cut' | 'fill';
 
 export interface SectionPoint {
   offset: number;
@@ -56,20 +73,35 @@ function buildSide(
   centerZ: number,
   ground: GroundProfile,
   side: 1 | -1,
+  laneCrossfall: number,
 ): { points: SectionPoint[]; parts: SectionPart[] } {
   const points: SectionPoint[] = [{ offset: 0, z: centerZ }];
   const parts: SectionPart[] = [];
   let o = 0;
   let z = centerZ;
   o += t.laneWidth;
-  z -= t.laneWidth * t.laneCrossfall;
+  z -= t.laneWidth * laneCrossfall;
   points.push({ offset: side * o, z });
   parts.push('lane');
   if (t.shoulderWidth > 0) {
+    // With superelevation the shoulder keeps its extra fall relative to the lane.
+    const sf = laneCrossfall + (t.shoulderCrossfall - t.laneCrossfall);
     o += t.shoulderWidth;
-    z -= t.shoulderWidth * t.shoulderCrossfall;
+    z -= t.shoulderWidth * sf;
     points.push({ offset: side * o, z });
     parts.push('shoulder');
+  }
+  const footway = side === 1 ? t.footwayRight : t.footwayLeft;
+  if (footway > 0) {
+    if (t.kerbHeight > 0) {
+      z += t.kerbHeight;
+      points.push({ offset: side * o, z });
+      parts.push('kerb');
+    }
+    o += footway;
+    z += footway * t.footwayCrossfall; // falls towards the road, so rises outwards
+    points.push({ offset: side * o, z });
+    parts.push('footway');
   }
   // Daylight: go up (cut) or down (fill) from the shoulder edge until the ground is met.
   const g0 = ground(side * o);
@@ -101,9 +133,14 @@ function buildSide(
   return { points, parts };
 }
 
-export function buildSection(t: SectionTemplate, centerZ: number, ground: GroundProfile): Section {
-  const right = buildSide(t, centerZ, ground, 1);
-  const left = buildSide(t, centerZ, ground, -1);
+export function buildSection(
+  t: SectionTemplate,
+  centerZ: number,
+  ground: GroundProfile,
+  crossfall: SideCrossfall = { left: t.laneCrossfall, right: t.laneCrossfall },
+): Section {
+  const right = buildSide(t, centerZ, ground, 1, crossfall.right);
+  const left = buildSide(t, centerZ, ground, -1, crossfall.left);
   const points = [...left.points.slice().reverse(), ...right.points.slice(1)];
   const parts = [...left.parts.slice().reverse(), ...right.parts];
   const { cut, fill } = areasBetween(points, ground);
@@ -148,4 +185,39 @@ export function endAreaVolumes(sections: { station: number; cutArea: number; fil
     fill += ((a.fillArea + b.fillArea) / 2) * L;
   }
   return { cut, fill };
+}
+
+/**
+ * Superelevation in a circular curve (fraction): v² / 254R (about half the lateral
+ * acceleration taken by banking), at least the normal crossfall, at most `max`.
+ * Simplified rule for early design; check against N100.
+ */
+export function superelevationFor(
+  speed: number,
+  radius: number,
+  normal: number,
+  max = 0.06,
+): number {
+  if (!Number.isFinite(radius) || radius <= 0) return normal;
+  return Math.min(max, Math.max(normal, (speed * speed) / (254 * radius)));
+}
+
+/**
+ * Crossfall per side at a point with signed curvature k (positive = left turn), where the
+ * curve's full superelevation eArc applies at curvature kArc. Rotation about the centreline:
+ * the inner side falls inwards at max(normal, e); the outer side rotates linearly from
+ * normal crossfall to falling inwards at eArc. Clothoids give a linear run-off.
+ */
+export function sideCrossfall(
+  normal: number,
+  k: number,
+  kArc: number,
+  eArc: number,
+): SideCrossfall {
+  if (k === 0 || kArc === 0 || eArc <= 0) return { left: normal, right: normal };
+  const ratio = Math.min(1, Math.abs(k) / Math.abs(kArc));
+  const e = eArc * ratio;
+  const inner = Math.max(normal, e);
+  const outer = normal - ratio * (normal + eArc);
+  return k > 0 ? { left: inner, right: outer } : { left: outer, right: inner };
 }

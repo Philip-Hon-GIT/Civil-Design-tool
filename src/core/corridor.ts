@@ -1,5 +1,12 @@
-import { pointAtStation, type Alignment } from './alignment';
-import { buildSection, endAreaVolumes, type Section, type SectionTemplate } from './crossSection';
+import { curvatureAt, pointAtStation, type Alignment } from './alignment';
+import {
+  buildSection,
+  endAreaVolumes,
+  sideCrossfall,
+  superelevationFor,
+  type Section,
+  type SectionTemplate,
+} from './crossSection';
 import { elevationAt, type Profile } from './profile';
 
 /** Ground elevation at a map position (undefined if unknown). */
@@ -20,6 +27,11 @@ export interface Corridor {
   fillVolume: number;
 }
 
+/** Design speed for superelevation; 0 or undefined = no superelevation. */
+export interface CorridorOptions {
+  speed?: number;
+}
+
 /** Cross-section at one station. */
 export function sectionAtStation(
   al: Alignment,
@@ -27,12 +39,24 @@ export function sectionAtStation(
   template: SectionTemplate,
   ground: GroundSampler,
   station: number,
+  options: CorridorOptions = {},
 ): CorridorSection {
   const p = pointAtStation(al, station);
   const rightX = Math.sin(p.heading);
   const rightY = -Math.cos(p.heading);
-  const section = buildSection(template, elevationAt(profile, p.station), (o) =>
-    ground(p.x + rightX * o, p.y + rightY * o),
+  let crossfall;
+  if (options.speed) {
+    const { k, kArc } = curvatureAt(al, p.station);
+    const eArc = kArc
+      ? superelevationFor(options.speed, 1 / Math.abs(kArc), template.laneCrossfall)
+      : 0;
+    crossfall = sideCrossfall(template.laneCrossfall, k, kArc, eArc);
+  }
+  const section = buildSection(
+    template,
+    elevationAt(profile, p.station),
+    (o) => ground(p.x + rightX * o, p.y + rightY * o),
+    crossfall,
   );
   return { ...section, station: p.station, x: p.x, y: p.y, rightX, rightY };
 }
@@ -44,11 +68,12 @@ export function buildCorridor(
   template: SectionTemplate,
   ground: GroundSampler,
   step = 5,
+  options: CorridorOptions = {},
 ): Corridor {
   const stations: number[] = [];
   for (let s = al.startStation; s < al.startStation + al.length; s += step) stations.push(s);
   stations.push(al.startStation + al.length);
-  const sections = stations.map((s) => sectionAtStation(al, profile, template, ground, s));
+  const sections = stations.map((s) => sectionAtStation(al, profile, template, ground, s, options));
   const { cut, fill } = endAreaVolumes(sections);
   return { sections, cutVolume: cut, fillVolume: fill };
 }

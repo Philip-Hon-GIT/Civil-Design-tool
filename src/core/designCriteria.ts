@@ -81,28 +81,28 @@ export const ROAD_PRESETS: RoadPreset[] = [
     name: 'Atkomstveg, 30 km/h',
     speed: 30,
     maxGrade: 0.1,
-    template: { laneWidth: 2.5, shoulderWidth: 0.25 },
+    template: { laneWidth: 2.5, shoulderWidth: 0.25, footwayLeft: 0, footwayRight: 0 },
   },
   {
     id: 'samle',
     name: 'Samleveg, 40 km/h',
     speed: 40,
     maxGrade: 0.08,
-    template: { laneWidth: 3.0, shoulderWidth: 0.25 },
+    template: { laneWidth: 3.0, shoulderWidth: 0.25, footwayLeft: 0, footwayRight: 2.5 },
   },
   {
     id: 'hoved',
     name: 'Hovedveg i by, 50 km/h',
     speed: 50,
     maxGrade: 0.07,
-    template: { laneWidth: 3.25, shoulderWidth: 0.5 },
+    template: { laneWidth: 3.25, shoulderWidth: 0.5, footwayLeft: 2.5, footwayRight: 3.0 },
   },
   {
     id: 'hoved60',
     name: 'Hovedveg, 60 km/h',
     speed: 60,
     maxGrade: 0.06,
-    template: { laneWidth: 3.25, shoulderWidth: 0.75 },
+    template: { laneWidth: 3.25, shoulderWidth: 0.75, footwayLeft: 0, footwayRight: 3.0 },
   },
 ];
 

@@ -12,6 +12,9 @@ const FIELDS: { key: keyof SectionTemplate; label: string; unit: string; percent
   { key: 'laneCrossfall', label: 'Lane crossfall', unit: '%', percent: true },
   { key: 'shoulderWidth', label: 'Shoulder width', unit: 'm' },
   { key: 'shoulderCrossfall', label: 'Shoulder crossfall', unit: '%', percent: true },
+  { key: 'footwayLeft', label: 'Footway left', unit: 'm' },
+  { key: 'footwayRight', label: 'Footway right', unit: 'm' },
+  { key: 'kerbHeight', label: 'Kerb height', unit: 'm' },
   { key: 'cutSlope', label: 'Cut slope 1:', unit: '' },
   { key: 'fillSlope', label: 'Fill slope 1:', unit: '' },
 ];
@@ -24,8 +27,9 @@ const DEFAULT_PRESET = ROAD_PRESETS[1]!;
  */
 export function mountTemplatePanel(
   root: HTMLElement,
-  onChange: (t: SectionTemplate, c: DesignCriteria) => void,
+  onChange: (t: SectionTemplate, c: DesignCriteria, superelevation: boolean) => void,
 ) {
+  let superelevation = true;
   let t: SectionTemplate = { ...DEFAULT_TEMPLATE, ...DEFAULT_PRESET.template };
   let c: DesignCriteria = criteriaFor(DEFAULT_PRESET.speed, DEFAULT_PRESET.maxGrade);
   root.innerHTML = `
@@ -35,6 +39,7 @@ export function mountTemplatePanel(
     <p class="hint">Indicative values from standard formulas. Check against N100 and the municipal road norm.</p>
     <h2 class="sub">Cross-section</h2>
     <div class="template"></div>
+    <label class="check"><input type="checkbox" class="superelevation" checked /> Superelevation in curves</label>
     <div class="quantities"></div>
     <h2 class="sub">Design checks</h2>
     <div class="checks"></div>`;
@@ -69,7 +74,7 @@ export function mountTemplatePanel(
       const v = Number(input.value);
       if (!Number.isFinite(v) || v < 0) return;
       t = { ...t, [f.key]: f.percent ? v / 100 : v };
-      onChange({ ...t }, c);
+      onChange({ ...t }, c, superelevation);
     });
     inputs.set(f.key, input);
     const unit = document.createElement('span');
@@ -83,7 +88,11 @@ export function mountTemplatePanel(
     c = criteriaFor(p.speed, p.maxGrade);
     renderInputs();
     renderCriteria();
-    onChange({ ...t }, c);
+    onChange({ ...t }, c, superelevation);
+  });
+  root.querySelector<HTMLInputElement>('.superelevation')?.addEventListener('change', (e) => {
+    superelevation = (e.target as HTMLInputElement).checked;
+    onChange({ ...t }, c, superelevation);
   });
   renderInputs();
   renderCriteria();
@@ -93,6 +102,7 @@ export function mountTemplatePanel(
   return {
     template: () => ({ ...t }),
     criteria: () => c,
+    superelevation: () => superelevation,
     setQuantities(cut: number, fill: number, length: number) {
       quantities.textContent = `Earthworks over ${length.toFixed(0)} m: cut ${Math.round(cut).toLocaleString('en')} m³ · fill ${Math.round(fill).toLocaleString('en')} m³`;
     },

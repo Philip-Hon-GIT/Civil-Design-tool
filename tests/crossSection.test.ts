@@ -72,3 +72,37 @@ describe('areasBetween / endAreaVolumes', () => {
     expect(v.cut).toBeCloseTo(10, 9);
   });
 });
+
+describe('street section', () => {
+  it('adds kerb and footway on the chosen side', async () => {
+    const { buildSection, DEFAULT_TEMPLATE } = await import('../src/core/crossSection');
+    const t = { ...DEFAULT_TEMPLATE, footwayRight: 2.5, footwayLeft: 0, kerbHeight: 0.12 };
+    const s = buildSection(t, 10, () => 9);
+    const rightParts = s.parts.slice(s.parts.indexOf('lane') + 1);
+    expect(rightParts).toContain('kerb');
+    expect(rightParts).toContain('footway');
+    expect(s.parts.filter((p) => p === 'footway').length).toBe(1);
+    // Footway edge: lane -0.09, shoulder -0.01, kerb +0.12, footway +0.05.
+    const fwIdx = s.parts.lastIndexOf('footway');
+    expect(s.points[fwIdx + 1]!.z).toBeCloseTo(10 - 0.09 - 0.01 + 0.12 + 0.05, 9);
+  });
+});
+
+describe('superelevation', () => {
+  it('is clamped between normal crossfall and the maximum', async () => {
+    const { superelevationFor } = await import('../src/core/crossSection');
+    expect(superelevationFor(40, 1000, 0.03)).toBe(0.03);
+    expect(superelevationFor(50, 20, 0.03, 0.06)).toBe(0.06);
+    expect(superelevationFor(40, 150, 0.03)).toBeCloseTo(1600 / (254 * 150), 9);
+  });
+
+  it('rotates the outer side to fall inwards in a left curve', async () => {
+    const { sideCrossfall } = await import('../src/core/crossSection');
+    const full = sideCrossfall(0.03, 1 / 150, 1 / 150, 0.05);
+    expect(full.left).toBeCloseTo(0.05, 9); // inner side falls towards the centre
+    expect(full.right).toBeCloseTo(-0.05, 9); // outer side rises outwards
+    const half = sideCrossfall(0.03, 0.5 / 150, 1 / 150, 0.05);
+    expect(half.right).toBeCloseTo(0.03 - 0.5 * 0.08, 9);
+    expect(sideCrossfall(0.03, 0, 0, 0)).toEqual({ left: 0.03, right: 0.03 });
+  });
+});

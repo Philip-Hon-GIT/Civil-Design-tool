@@ -12,6 +12,8 @@ import type { Point2 } from '../core/projects';
 export const PART_COLORS: Record<SectionPart, string> = {
   lane: '#3a3d44',
   shoulder: '#7b7f87',
+  kerb: '#d6d6d6',
+  footway: '#b5654a',
   fill: '#8fae5d',
   cut: '#b08860',
 };

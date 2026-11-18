@@ -227,3 +227,21 @@ export function fitCurves(points: PIInput[], defaults: { radius: number; l1: num
     return { ...p, radius: defaults.radius, l1: l, l2: l };
   });
 }
+
+/**
+ * Signed curvature at a station, and the curvature of the circular arc of the curve the
+ * station belongs to (0 on tangents).
+ */
+export function curvatureAt(al: Alignment, station: number): { k: number; kArc: number } {
+  const idx = al.elements.findIndex((el) => station <= el.startStation + el.length + 1e-9);
+  const e = al.elements[idx < 0 ? al.elements.length - 1 : idx];
+  if (!e || e.type === 'line') return { k: 0, kArc: 0 };
+  const t = Math.min(Math.max(station - e.startStation, 0), e.length);
+  const k = e.length > 0 ? e.k0 + ((e.k1 - e.k0) * t) / e.length : e.k0;
+  // The arc's curvature is the largest |k| among this element and its curve neighbours.
+  let kArc = Math.max(Math.abs(e.k0), Math.abs(e.k1));
+  for (const n of [al.elements[idx - 1], al.elements[idx + 1]]) {
+    if (n && n.type !== 'line') kArc = Math.max(kArc, Math.abs(n.k0), Math.abs(n.k1));
+  }
+  return { k, kArc: Math.sign(k || e.k0 || e.k1) * kArc };
+}

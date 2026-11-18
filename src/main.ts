@@ -41,19 +41,22 @@ if (profileRoot && sectionRoot && templateRoot) {
   let sectionStation = 0;
   let rebuildTimer = 0;
 
-  const panel = mountTemplatePanel(templateRoot, (t, c) => {
+  const panel = mountTemplatePanel(templateRoot, (t, c, se) => {
     template = t;
     criteria = c;
+    superelevation = se;
     rebuildRoad();
   });
   let template: SectionTemplate = panel.template();
   let criteria: DesignCriteria = panel.criteria();
+  let superelevation = panel.superelevation();
+  const corridorOptions = () => ({ speed: superelevation ? criteria.speed : undefined });
 
   const showSection = (station: number) => {
     sectionStation = station;
     const al = alignmentView.getAlignment();
     if (!al || !profile) return sectionView.show(null, () => undefined);
-    const sec = sectionAtStation(al, profile, template, ground, station);
+    const sec = sectionAtStation(al, profile, template, ground, station, corridorOptions());
     sectionView.show(sec, (o) => ground(sec.x + sec.rightX * o, sec.y + sec.rightY * o));
   };
 
@@ -69,7 +72,7 @@ if (profileRoot && sectionRoot && templateRoot) {
       setRoadFootprint(null);
       const al = alignmentView.getAlignment();
       if (al && profile) {
-        const corridor = buildCorridor(al, profile, template, ground, 2);
+        const corridor = buildCorridor(al, profile, template, ground, 2, corridorOptions());
         road = buildRoadMesh(corridor, area.center);
         instance.add(road);
         setRoadFootprint(corridorFootprint(corridor));

@@ -58,14 +58,16 @@ export class SectionView {
         x2: X(b.offset),
         y2: Y(b.z),
         stroke: PART_COLORS[section.parts[i - 1]!],
-        'stroke-width': section.parts[i - 1] === 'lane' ? 4 : 2.5,
+        'stroke-width':
+          section.parts[i - 1] === 'lane' || section.parts[i - 1] === 'footway' ? 4 : 2.5,
       });
     }
     this.add('line', { x1: X(0), y1: 14, x2: X(0), y2: h, class: 'centerline' });
     const centre = pts.find((p) => p.offset === 0);
     this.info.textContent =
       `Sta ${formatStation(section.station)} · design ${centre?.z.toFixed(2) ?? '–'}` +
-      ` · cut ${section.cutArea.toFixed(1)} m² · fill ${section.fillArea.toFixed(1)} m²`;
+      ` · cut ${section.cutArea.toFixed(1)} m² · fill ${section.fillArea.toFixed(1)} m²` +
+      crossfallText(section);
   }
 
   private add(tag: string, attrs: Record<string, string | number>) {
@@ -73,4 +75,15 @@ export class SectionView {
     for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
     this.svg.append(e);
   }
+}
+
+/** Lane crossfall on each side, e.g. " · ← 3.0 % | 4.2 % →". */
+function crossfallText(section: CorridorSection): string {
+  const centre = section.points.findIndex((p) => p.offset === 0);
+  const l = section.points[centre - 1];
+  const c = section.points[centre];
+  const r = section.points[centre + 1];
+  if (!l || !c || !r) return '';
+  const fall = (p: { offset: number; z: number }) => ((c.z - p.z) / Math.abs(p.offset)) * 100;
+  return ` · crossfall L ${fall(l).toFixed(1)} % R ${fall(r).toFixed(1)} %`;
 }
