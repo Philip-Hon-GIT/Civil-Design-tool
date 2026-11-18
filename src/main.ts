@@ -3,6 +3,7 @@ import type { BaseMap } from './io/kartverket';
 import { ACCEPTED_TERRAIN_EXTENSIONS } from './io/terrainFiles';
 import { buildCorridor, corridorFootprint, sectionAtStation } from './core/corridor';
 import type { SectionTemplate } from './core/crossSection';
+import { checkDesign, type DesignCriteria } from './core/designCriteria';
 import { elevationAt, type Profile } from './core/profile';
 import { SectionView } from './ui/sectionView';
 import { mountTemplatePanel } from './ui/templatePanel';
@@ -40,11 +41,13 @@ if (profileRoot && sectionRoot && templateRoot) {
   let sectionStation = 0;
   let rebuildTimer = 0;
 
-  const panel = mountTemplatePanel(templateRoot, (t) => {
+  const panel = mountTemplatePanel(templateRoot, (t, c) => {
     template = t;
+    criteria = c;
     rebuildRoad();
   });
   let template: SectionTemplate = panel.template();
+  let criteria: DesignCriteria = panel.criteria();
 
   const showSection = (station: number) => {
     sectionStation = station;
@@ -71,6 +74,7 @@ if (profileRoot && sectionRoot && templateRoot) {
         instance.add(road);
         setRoadFootprint(corridorFootprint(corridor));
         panel.setQuantities(corridor.cutVolume, corridor.fillVolume, al.length);
+        panel.setIssues(checkDesign(al, profile, criteria));
         const s = Math.min(Math.max(sectionStation, al.startStation), al.startStation + al.length);
         showSection(s);
       }

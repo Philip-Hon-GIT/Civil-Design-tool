@@ -311,3 +311,20 @@ tr.arc td:first-child {
   stroke: #ff8a3d;
   stroke-dasharray: 3 3;
 }
+aside h2.sub {
+  margin-top: 14px;
+}
+.preset {
+  width: 100%;
+  margin: 0 0 6px;
+}
+.criteria {
+  color: #c9d1dc;
+}
+.checks p {
+  margin: 3px 0;
+  color: #ffb347;
+}
+.checks p.ok {
+  color: #8fd18f;
+}
