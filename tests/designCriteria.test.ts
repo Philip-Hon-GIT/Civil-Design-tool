@@ -14,7 +14,10 @@ describe('criteriaFor', () => {
 
   it('uses R = v² / 127(e + f), rounded up to 5 m', () => {
     // 50 km/h, e 0.04, f 0.18: 2500 / 27.94 = 89.5 → 90.
-    expect(criteriaFor(50, 0.07).minRadius).toBe(90);
+    // N100 Tabell B.1 (gater).
+    expect(criteriaFor(50, 0.07).minRadius).toBe(60);
+    expect(criteriaFor(40, 0.08).minSagK).toBe(1.5);
+    expect(criteriaFor(60, 0.06).minRadius).toBe(125);
   });
 
   it('stopping sight distance at 50 km/h is about 55 m', () => {
@@ -31,7 +34,7 @@ describe('checkDesign', () => {
   });
 
   it('flags a too-small radius and a short clothoid', () => {
-    const issues = checkDesign(al, null, criteriaFor(50, 0.07));
+    const issues = checkDesign(al, null, criteriaFor(60, 0.06));
     expect(issues.some((i) => i.message.startsWith('Radius 60'))).toBe(true);
     expect(issues.some((i) => i.message.startsWith('Clothoid A'))).toBe(true);
   });

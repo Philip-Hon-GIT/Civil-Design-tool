@@ -83,7 +83,9 @@ function buildSide(
   z -= t.laneWidth * laneCrossfall;
   points.push({ offset: side * o, z });
   parts.push('lane');
-  if (t.shoulderWidth > 0) {
+  const footway = side === 1 ? t.footwayRight : t.footwayLeft;
+  // Street with footway (N100 gate): the kerb sits at the carriageway edge, no shoulder.
+  if (t.shoulderWidth > 0 && footway <= 0) {
     // With superelevation the shoulder keeps its extra fall relative to the lane.
     const sf = laneCrossfall + (t.shoulderCrossfall - t.laneCrossfall);
     o += t.shoulderWidth;
@@ -91,7 +93,6 @@ function buildSide(
     points.push({ offset: side * o, z });
     parts.push('shoulder');
   }
-  const footway = side === 1 ? t.footwayRight : t.footwayLeft;
   if (footway > 0) {
     if (t.kerbHeight > 0) {
       z += t.kerbHeight;

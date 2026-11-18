@@ -29,17 +29,18 @@ export function mountTemplatePanel(
   root: HTMLElement,
   onChange: (t: SectionTemplate, c: DesignCriteria, superelevation: boolean) => void,
 ) {
-  let superelevation = true;
+  // N100 gater: normally no superelevation (overhøyde), so off by default.
+  let superelevation = false;
   let t: SectionTemplate = { ...DEFAULT_TEMPLATE, ...DEFAULT_PRESET.template };
   let c: DesignCriteria = criteriaFor(DEFAULT_PRESET.speed, DEFAULT_PRESET.maxGrade);
   root.innerHTML = `
     <h2>Road class</h2>
     <select class="preset"></select>
     <div class="criteria"></div>
-    <p class="hint">Indicative values from standard formulas. Check against N100 and the municipal road norm.</p>
+    <p class="hint">Min R and sag K from N100 Tabell B.1 (gater). Check against the municipal road norm.</p>
     <h2 class="sub">Cross-section</h2>
     <div class="template"></div>
-    <label class="check"><input type="checkbox" class="superelevation" checked /> Superelevation in curves</label>
+    <label class="check"><input type="checkbox" class="superelevation" /> Superelevation in curves (roads, not streets)</label>
     <div class="quantities"></div>
     <h2 class="sub">Design checks</h2>
     <div class="checks"></div>`;

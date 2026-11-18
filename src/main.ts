@@ -10,6 +10,7 @@ import { SectionView } from './ui/sectionView';
 import { mountTemplatePanel } from './ui/templatePanel';
 import { buildRoadMesh } from './viewer/roadMesh';
 import type { Mesh } from 'three';
+import { sampleAlignment } from './core/alignment';
 import { mountAlignmentPanel } from './ui/alignmentPanel';
 import { ProfileView } from './ui/profileView';
 import { AlignmentView } from './viewer/alignmentView';
@@ -118,9 +119,22 @@ if (profileRoot && sectionRoot && templateRoot) {
   });
   // Terrain tiles load progressively; refresh the ground line when they do.
   let timer = 0;
+  // Only rebuild when the ground under the road actually changed: tiles elsewhere load all
+  // the time while navigating, and each rebuild also redraws the terrain mask (slow).
+  let groundKey = '';
+  const groundUnderRoad = () => {
+    const al = alignmentView.getAlignment();
+    if (!al) return '';
+    const samples: string[] = [];
+    for (const s of sampleAlignment(al, 10)) samples.push((ground(s.x, s.y) ?? NaN).toFixed(1));
+    return samples.join(',');
+  };
   map.addEventListener('elevation-changed', () => {
     clearTimeout(timer);
     timer = window.setTimeout(() => {
+      const key = groundUnderRoad();
+      if (key === groundKey) return;
+      groundKey = key;
       profileView.resampleGround();
       rebuildRoad();
     }, 500);

@@ -5,7 +5,7 @@ import {
   Mesh,
   MeshLambertMaterial,
 } from 'three';
-import type { Corridor } from '../core/corridor';
+import { sameStructure, type Corridor } from '../core/corridor';
 import type { SectionPart } from '../core/crossSection';
 import type { Point2 } from '../core/projects';
 
@@ -37,7 +37,7 @@ export function buildRoadMesh(corridor: Corridor, origin: Point2): Mesh {
     const a = corridor.sections[k - 1]!;
     const b = corridor.sections[k]!;
     // Only join sections with the same structure (same parts in the same order).
-    if (a.parts.join() !== b.parts.join()) continue;
+    if (!sameStructure(a, b)) continue;
     for (let i = 0; i < a.parts.length; i++) {
       const c = rgb(PART_COLORS[a.parts[i]!]);
       const a0 = world(a, i);
