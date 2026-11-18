@@ -1,7 +1,8 @@
 import { KLAEBUVEIEN } from './core/projects';
 import type { BaseMap } from './io/kartverket';
 import { ACCEPTED_TERRAIN_EXTENSIONS } from './io/terrainFiles';
-import { buildCorridor, corridorFootprint, sectionAtStation } from './core/corridor';
+import { exportIfc, type TerrainGrid } from './io/ifc/exportIfc';
+import { buildCorridor, corridorFootprint, sectionAtStation, type Corridor } from './core/corridor';
 import type { SectionTemplate } from './core/crossSection';
 import { checkDesign, type DesignCriteria } from './core/designCriteria';
 import { elevationAt, type Profile } from './core/profile';
@@ -40,6 +41,8 @@ if (profileRoot && sectionRoot && templateRoot) {
   let road: Mesh | null = null;
   let sectionStation = 0;
   let rebuildTimer = 0;
+  let corridor: Corridor | null = null;
+  const exportButton = document.querySelector<HTMLButtonElement>('#export-ifc');
 
   const panel = mountTemplatePanel(templateRoot, (t, c, se) => {
     template = t;
@@ -70,9 +73,10 @@ if (profileRoot && sectionRoot && templateRoot) {
         road = null;
       }
       setRoadFootprint(null);
+      corridor = null;
       const al = alignmentView.getAlignment();
       if (al && profile) {
-        const corridor = buildCorridor(al, profile, template, ground, 2, corridorOptions());
+        corridor = buildCorridor(al, profile, template, ground, 2, corridorOptions());
         road = buildRoadMesh(corridor, area.center);
         instance.add(road);
         setRoadFootprint(corridorFootprint(corridor));
@@ -81,6 +85,7 @@ if (profileRoot && sectionRoot && templateRoot) {
         const s = Math.min(Math.max(sectionStation, al.startStation), al.startStation + al.length);
         showSection(s);
       }
+      if (exportButton) exportButton.disabled = !corridor;
       instance.notifyChange();
     }, 150);
   }
@@ -92,6 +97,25 @@ if (profileRoot && sectionRoot && templateRoot) {
     rebuildRoad();
   });
   profileView.onHover(showSection);
+
+  exportButton?.addEventListener('click', () => {
+    const al = alignmentView.getAlignment();
+    if (!al || !profile || !corridor) return;
+    const ifc = exportIfc({
+      area,
+      alignment: al,
+      profile,
+      corridor,
+      template,
+      criteria,
+      terrain: terrainAround(corridor, 40, 4),
+    });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([ifc], { type: 'application/x-step' }));
+    a.download = `${area.id}.ifc`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
   // Terrain tiles load progressively; refresh the ground line when they do.
   let timer = 0;
   map.addEventListener('elevation-changed', () => {
@@ -170,3 +194,18 @@ target.addEventListener('drop', (e) => {
   target.classList.remove('dropping');
   if (e.dataTransfer?.files) void importFiles(Array.from(e.dataTransfer.files));
 });
+
+/** Sample the loaded terrain on a grid around the corridor, for the IFC terrain surface. */
+function terrainAround(corridor: Corridor, margin: number, step: number): TerrainGrid {
+  const xs = corridor.sections.map((s) => s.x);
+  const ys = corridor.sections.map((s) => s.y);
+  const x0 = Math.floor((Math.min(...xs) - margin) / step) * step;
+  const y0 = Math.floor((Math.min(...ys) - margin) / step) * step;
+  const nx = Math.ceil((Math.max(...xs) + margin - x0) / step) + 1;
+  const ny = Math.ceil((Math.max(...ys) + margin - y0) / step) + 1;
+  const z = new Float64Array(nx * ny);
+  for (let j = 0; j < ny; j++)
+    for (let i = 0; i < nx; i++)
+      z[j * nx + i] = map.getElevationFast(x0 + i * step, y0 + j * step)?.elevation ?? NaN;
+  return { x0, y0, step, nx, ny, z };
+}
