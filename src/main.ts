@@ -1,8 +1,17 @@
+import { KLAEBUVEIEN } from './core/projects';
+import type { BaseMap } from './io/kartverket';
 import { createViewer } from './viewer/createViewer';
 import './style.css';
 
 const target = document.querySelector<HTMLDivElement>('#viewer');
 if (!target) throw new Error('Missing #viewer element');
 
-// Placeholder project area (Oslo, EUREF89 UTM33). Replaced by area picking in step 1.
-createViewer({ target, center: { x: 262_000, y: 6_650_000 }, size: 2000 });
+const area = KLAEBUVEIEN;
+const { setBaseMap } = createViewer({ target, area });
+
+const title = document.querySelector('#area-name');
+if (title) title.textContent = `${area.name} · ${area.crs}`;
+
+document.querySelector<HTMLSelectElement>('#basemap')?.addEventListener('change', (e) => {
+  void setBaseMap((e.target as HTMLSelectElement).value as BaseMap | 'none');
+});

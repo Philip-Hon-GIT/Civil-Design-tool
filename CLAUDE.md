@@ -27,6 +27,14 @@ model with minimal effort. Roads first, utilities later.
 - `tests/` Vitest unit tests, mirroring `src/`.
 - `samples/` small open test data only. `data/` is local and git-ignored.
 
+## Data sources (all CORS-enabled, fetched directly by the browser)
+
+- Terrain: Geonorge WCS 1.0.0 `wcs.hoyde-dtm-nhm-<epsg>`, coverage `nhm_dtm_topo_<epsg>` (1 m DTM, GeoTIFF). WCS 2.0.1 GetCoverage returns 400 on this ArcGIS server; use 1.0.0.
+- Base maps: Kartverket WMTS `cache.kartverket.no` (`topo`, `topograatone`; matrix sets `utm32n`/`utm33n`/`utm35n`).
+- Addresses: `ws.geonorge.no/adresser/v1`.
+- Orthophoto (Norge i bilder WMS) needs authorisation; not used yet.
+- Trondheim and most of mid/western Norway use EPSG:25832.
+
 ## Commands
 
 - `npm run dev` start the dev server

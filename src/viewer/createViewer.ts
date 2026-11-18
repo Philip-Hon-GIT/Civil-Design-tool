@@ -1,42 +1,93 @@
 import Instance from '@giro3d/giro3d/core/Instance.js';
 import CoordinateSystem from '@giro3d/giro3d/core/geographic/CoordinateSystem.js';
 import Extent from '@giro3d/giro3d/core/geographic/Extent.js';
+import ColorLayer from '@giro3d/giro3d/core/layer/ColorLayer.js';
+import ElevationLayer from '@giro3d/giro3d/core/layer/ElevationLayer.js';
 import Map from '@giro3d/giro3d/entities/Map.js';
+import { MapLightingMode } from '@giro3d/giro3d/entities/MapLightingOptions.js';
+import GeoTIFFFormat from '@giro3d/giro3d/formats/GeoTIFFFormat.js';
+import UrlImageSource from '@giro3d/giro3d/sources/UrlImageSource.js';
+import WmtsSource from '@giro3d/giro3d/sources/WmtsSource.js';
+import { BufferGeometry, Line, LineBasicMaterial, Vector3 } from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
-import { CRS_DEFS, DEFAULT_CRS } from '../core/crs';
+import { CRS_DEFS, utmMatrixSet } from '../core/crs';
+import { areaBounds, type ProjectArea } from '../core/projects';
+import { type BaseMap, dtmWcsTemplate, KARTVERKET_WMTS_CAPABILITIES } from '../io/kartverket';
 
 export interface ViewerOptions {
   target: HTMLDivElement;
-  /** Centre of the project area in project CRS (metres). */
-  center: { x: number; y: number };
-  /** Side length of the square project area in metres. */
-  size?: number;
+  area: ProjectArea;
 }
 
 /**
- * Create the 3D viewer: a Giro3D instance in Norwegian UTM coordinates with an
- * empty map covering the project area. Terrain and GIS layers are added in step 1.
+ * Create the 3D viewer for a project area: Kartverket 1 m terrain (DTM) as elevation,
+ * a Kartverket base map draped on top, and the area's reference line.
  */
-export function createViewer({ target, center, size = 2000 }: ViewerOptions) {
-  const crs = CoordinateSystem.register(DEFAULT_CRS, CRS_DEFS[DEFAULT_CRS]);
+export function createViewer({ target, area }: ViewerOptions) {
+  const crs = CoordinateSystem.register(area.crs, CRS_DEFS[area.crs]);
   const instance = new Instance({ target, crs, backgroundColor: '#1e2530' });
+  const extent = new Extent(crs, areaBounds(area));
 
-  const half = size / 2;
-  const extent = new Extent(crs, {
-    minX: center.x - half,
-    maxX: center.x + half,
-    minY: center.y - half,
-    maxY: center.y + half,
+  const map = new Map({
+    extent,
+    backgroundColor: '#5b6b5a',
+    lighting: { enabled: true, mode: MapLightingMode.Hillshade, elevationLayersOnly: true },
   });
-
-  const map = new Map({ extent, backgroundColor: '#5b6b5a' });
   void instance.add(map);
 
-  instance.view.camera.position.set(center.x, center.y - size, size * 0.8);
+  const terrain = new ElevationLayer({
+    name: 'Terrain (Kartverket DTM 1 m)',
+    extent,
+    source: new UrlImageSource({
+      urlTemplate: dtmWcsTemplate(area.crs),
+      format: new GeoTIFFFormat(),
+      crs,
+      httpTimeout: 20000,
+    }),
+  });
+  void map.addLayer(terrain);
+
+  const baseMaps: Partial<Record<BaseMap, ColorLayer>> = {};
+  async function setBaseMap(name: BaseMap | 'none') {
+    for (const [key, layer] of Object.entries(baseMaps)) layer.visible = key === name;
+    if (name === 'none' || baseMaps[name]) {
+      instance.notifyChange(map);
+      return;
+    }
+    const source = await WmtsSource.fromCapabilities(KARTVERKET_WMTS_CAPABILITIES, {
+      layer: name,
+      matrixSet: utmMatrixSet(area.crs),
+      imageFormat: 'image/png',
+    });
+    const layer = new ColorLayer({ name, extent, source });
+    baseMaps[name] = layer;
+    await map.addLayer(layer);
+  }
+  void setBaseMap('topograatone');
+
+  // Reference line (existing road), draped on the terrain once heights are available.
+  const refPoints = area.reference?.points ?? [];
+  const refLine = new Line(
+    new BufferGeometry().setFromPoints(refPoints.map((p) => new Vector3(p.x, p.y, 0))),
+    new LineBasicMaterial({ color: '#ff8a3d', depthTest: false }),
+  );
+  refLine.renderOrder = 10;
+  instance.add(refLine);
+  map.addEventListener('elevation-changed', () => {
+    const pts = refPoints.map(
+      (p) => new Vector3(p.x, p.y, (map.getElevationFast(p.x, p.y)?.elevation ?? 0) + 1.5),
+    );
+    refLine.geometry.setFromPoints(pts);
+    instance.notifyChange(refLine);
+  });
+
+  // Camera: oblique view from the south-east over the area.
+  const { center, size } = area;
+  instance.view.camera.position.set(center.x + size * 0.4, center.y - size * 0.8, size * 0.6);
   const controls = new MapControls(instance.view.camera, instance.domElement);
-  controls.target.set(center.x, center.y, 0);
+  controls.target.set(center.x, center.y, 50);
   controls.enableDamping = true;
   instance.view.setControls(controls);
 
-  return { instance, map, extent };
+  return { instance, map, extent, setBaseMap };
 }
