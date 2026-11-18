@@ -1,0 +1,133 @@
+# =========================================================
+# Secrets and credentials (never commit)
+# =========================================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+secrets/
+credentials*.json
+service-account*.json
+*.secret
+*.secrets
+.npmrc
+.pypirc
+.netrc
+
+# =========================================================
+# Project and survey data (client data, can be confidential)
+# Put real data in data/ locally. Small, shareable test files
+# go in samples/ and are allowed through the rules at the end.
+# =========================================================
+data/
+input/
+output/
+exports/
+uploads/
+tiles/
+cache/
+
+# Terrain, point clouds and rasters
+*.las
+*.laz
+*.copc.laz
+*.e57
+*.xyz
+*.tif
+*.tiff
+*.geotiff
+*.asc
+*.dem
+*.dtm
+
+# CAD and GIS formats
+*.dwg
+*.dxf
+*.dgn
+*.sos
+*.sosi
+*.landxml
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.gpkg
+*.gdb/
+*.kml
+*.kmz
+
+# BIM / model files
+*.ifc
+*.ifczip
+*.ifcxml
+*.3dm
+*.3dmbak
+*.rvt
+*.nwd
+*.nwc
+
+# Rhino / Grasshopper backups and autosaves
+*.rhl
+*.ghx.bak
+*.gh.bak
+
+# Allow small test data in samples/
+!samples/
+!samples/**
+
+# =========================================================
+# Node / web build
+# =========================================================
+node_modules/
+dist/
+build/
+.vite/
+.cache/
+.parcel-cache/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================================================
+# Python
+# =========================================================
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.ipynb_checkpoints/
+
+# =========================================================
+# Editors and OS
+# =========================================================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and temp files
+*.log
+logs/
+tmp/
+temp/
+*.tmp
