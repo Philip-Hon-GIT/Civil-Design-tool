@@ -44,11 +44,16 @@ export interface ViewerOptions {
 export function createViewer({ target, area }: ViewerOptions) {
   const crs = CoordinateSystem.register(area.crs, CRS_DEFS[area.crs]);
   const instance = new Instance({ target, crs, backgroundColor: '#1e2530' });
+  // High-DPI screens render 4x the pixels at full ratio; cap it to keep navigation smooth.
+  instance.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   const extent = new Extent(crs, areaBounds(area));
 
   const map = new Map({
     extent,
     backgroundColor: '#5b6b5a',
+    // Fewer, larger tiles (default 1.5): less terrain to fetch and decode while navigating.
+    subdivisionThreshold: 2.5,
+    castShadow: false,
     lighting: { enabled: true, mode: MapLightingMode.Hillshade, elevationLayersOnly: true },
   });
   void instance.add(map);
