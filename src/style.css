@@ -193,3 +193,81 @@ tr.arc td:first-child {
 .warnings p.ok {
   color: #8fd18f;
 }
+#workspace {
+  display: grid;
+  grid-template-rows: 1fr 240px;
+  min-height: 0;
+  min-width: 0;
+}
+#profile {
+  display: grid;
+  grid-template-rows: 30px 1fr;
+  background: #141922;
+  border-top: 1px solid #2a3342;
+  min-height: 0;
+}
+.profile-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.profile-bar button {
+  padding: 2px 8px;
+  background: #222a36;
+  color: inherit;
+  border: 1px solid #3a4556;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.profile-bar button.active {
+  background: #2f6fde;
+  border-color: #2f6fde;
+}
+.profile-info {
+  margin-left: auto;
+  color: #c9d1dc;
+  font-variant-numeric: tabular-nums;
+}
+.profile-svg {
+  width: 100%;
+  height: 100%;
+  user-select: none;
+}
+.profile-svg .grid {
+  stroke: #232b38;
+}
+.profile-svg .axis {
+  fill: #7f8a99;
+  font-size: 10px;
+}
+.profile-svg .empty {
+  fill: #7f8a99;
+  font-size: 13px;
+}
+.profile-svg .ground {
+  fill: rgba(150, 110, 70, 0.35);
+  stroke: #b08860;
+  stroke-width: 1.2;
+}
+.profile-svg .tangents {
+  fill: none;
+  stroke: #9aa4b2;
+  stroke-dasharray: 4 3;
+}
+.profile-svg .design {
+  fill: none;
+  stroke: #ffd23f;
+  stroke-width: 2;
+}
+.profile-svg .pvi {
+  fill: #ff8a3d;
+  stroke: #fff;
+  cursor: grab;
+}
+.profile-svg .grade,
+.profile-svg .pvi-label {
+  fill: #c9d1dc;
+  font-size: 10px;
+}

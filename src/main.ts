@@ -1,7 +1,9 @@
 import { KLAEBUVEIEN } from './core/projects';
 import type { BaseMap } from './io/kartverket';
 import { ACCEPTED_TERRAIN_EXTENSIONS } from './io/terrainFiles';
+import { elevationAt } from './core/profile';
 import { mountAlignmentPanel } from './ui/alignmentPanel';
+import { ProfileView } from './ui/profileView';
 import { AlignmentView } from './viewer/alignmentView';
 import { createViewer } from './viewer/createViewer';
 import { addTerrainFile, type AddedTerrain } from './viewer/terrainImport';
@@ -16,6 +18,21 @@ const { instance, map, crs, controls, setBaseMap } = createViewer({ target, area
 const alignmentView = new AlignmentView(instance, map, controls, area.center);
 const alignmentRoot = document.querySelector<HTMLElement>('#alignment-panel');
 if (alignmentRoot) mountAlignmentPanel(alignmentRoot, alignmentView, area);
+
+const profileRoot = document.querySelector<HTMLElement>('#profile');
+if (profileRoot) {
+  const profileView = new ProfileView(profileRoot, (x, y) => map.getElevationFast(x, y)?.elevation);
+  alignmentView.onChange((al) => profileView.setAlignment(al));
+  profileView.onChange((p) =>
+    alignmentView.setDesignElevation(p ? (s) => elevationAt(p, s) : null),
+  );
+  // Terrain tiles load progressively; refresh the ground line when they do.
+  let timer = 0;
+  map.addEventListener('elevation-changed', () => {
+    clearTimeout(timer);
+    timer = window.setTimeout(() => profileView.resampleGround(), 500);
+  });
+}
 
 const title = document.querySelector('#area-name');
 if (title) title.textContent = `${area.name} · ${area.crs}`;

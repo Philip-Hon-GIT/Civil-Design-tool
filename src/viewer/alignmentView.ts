@@ -43,6 +43,7 @@ export class AlignmentView {
   private alignment: Alignment | null = null;
   private drawing = false;
   private dragIndex = -1;
+  private designZ: ((station: number) => number) | null = null;
   private readonly listeners = new Set<(al: Alignment | null, pts: AlignmentPoints) => void>();
 
   constructor(
@@ -72,6 +73,16 @@ export class AlignmentView {
   setPoints(points: AlignmentPoints) {
     this.points = points.map((p) => ({ ...p }));
     this.update();
+  }
+
+  /** Draw the alignment at design elevation (from the profile) instead of on the terrain. */
+  setDesignElevation(fn: ((station: number) => number) | null) {
+    this.designZ = fn;
+    this.redraw();
+  }
+
+  getAlignment() {
+    return this.alignment;
   }
 
   setDrawing(on: boolean) {
@@ -141,6 +152,10 @@ export class AlignmentView {
         const b = pts[i]!;
         const va = this.local(a.x, a.y, 0.8);
         const vb = this.local(b.x, b.y, 0.8);
+        if (this.designZ) {
+          va.z = this.designZ(a.station) + 0.3;
+          vb.z = this.designZ(b.station) + 0.3;
+        }
         pos.push(va.x, va.y, va.z, vb.x, vb.y, vb.z);
         const c = hexToRgb(colorAt((a.station + b.station) / 2));
         col.push(...c, ...c);
